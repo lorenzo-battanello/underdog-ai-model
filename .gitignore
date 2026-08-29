@@ -1,0 +1,5 @@
+AIModels/
+*.gguf
+.DS_Store
+**/bin/
+**/obj/
