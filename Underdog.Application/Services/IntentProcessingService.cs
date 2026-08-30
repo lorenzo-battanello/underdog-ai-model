@@ -6,24 +6,16 @@ using System.Diagnostics;
 
 namespace Underdog.Application.Services;
 
-public sealed class IntentProcessingService : IIntentProcessingService
+public sealed class IntentProcessingService(
+    IIntentCacheService cacheService,
+    IModelService modelService,
+    IIntentObservabilityRepository intentObservabilityRepository,
+    IOptions<AiModelOptions> modelOptions) : IIntentProcessingService
 {
-    private readonly IIntentCacheService _cacheService;
-    private readonly IGgufModelService _modelService;
-    private readonly IIntentObservabilityRepository _intentObservabilityRepository;
-    private readonly AiModelOptions _modelOptions;
-
-    public IntentProcessingService(
-        IIntentCacheService cacheService,
-        IGgufModelService modelService,
-        IIntentObservabilityRepository intentObservabilityRepository,
-        IOptions<AiModelOptions> modelOptions)
-    {
-        _cacheService = cacheService;
-        _modelService = modelService;
-        _intentObservabilityRepository = intentObservabilityRepository;
-        _modelOptions = modelOptions.Value;
-    }
+    private readonly IIntentCacheService _cacheService = cacheService;
+    private readonly IModelService _modelService = modelService;
+    private readonly IIntentObservabilityRepository _intentObservabilityRepository = intentObservabilityRepository;
+    private readonly AiModelOptions _modelOptions = modelOptions.Value;
 
     public async Task<IntentResult> ProcessAsync(string userPrompt, CancellationToken cancellationToken = default)
     {
@@ -38,13 +30,13 @@ public sealed class IntentProcessingService : IIntentProcessingService
         var (normalizedPrompt, hash) = TextNormalizer.CleanAndHash(userPrompt);
         try
         {
-            var modelPath = ModelFingerprintService.ResolveAbsolutePath(_modelOptions);
-            var modelFileHash = ModelFingerprintService.ComputeSha256(modelPath);
-            await _intentObservabilityRepository.UpsertModelVersionAsync(
-                _modelOptions.ModelVersion,
-                modelPath,
-                modelFileHash,
-                cancellationToken);
+            //var modelPath = ModelFingerprintService.ResolveAbsolutePath(_modelOptions);
+           // var modelFileHash = ModelFingerprintService.ComputeSha256(modelPath);
+            // await _intentObservabilityRepository.UpsertModelVersionAsync(
+            //     _modelOptions.ModelVersion,
+            //     modelPath,
+            //     modelFileHash,
+            //     cancellationToken);
 
             var cacheEntry = await _cacheService.GetByHashAsync(hash, cancellationToken);
 
@@ -60,24 +52,24 @@ public sealed class IntentProcessingService : IIntentProcessingService
                 };
 
                 stopwatch.Stop();
-                await _intentObservabilityRepository.SaveAuditAsync(
-                    correlationId,
-                    userPrompt,
-                    hash,
-                    cacheEntry.RawJsonResponse,
-                    cachedResult.HumanPhrase,
-                    true,
-                    "Success",
-                    null,
-                    cancellationToken);
+                // await _intentObservabilityRepository.SaveAuditAsync(
+                //     correlationId,
+                //     userPrompt,
+                //     hash,
+                //     cacheEntry.RawJsonResponse,
+                //     cachedResult.HumanPhrase,
+                //     true,
+                //     "Success",
+                //     null,
+                //     cancellationToken);
 
-                await _intentObservabilityRepository.SaveMetricAsync(
-                    correlationId,
-                    (int)stopwatch.ElapsedMilliseconds,
-                    true,
-                    true,
-                    null,
-                    cancellationToken);
+                // await _intentObservabilityRepository.SaveMetricAsync(
+                //     correlationId,
+                //     (int)stopwatch.ElapsedMilliseconds,
+                //     true,
+                //     true,
+                //     null,
+                //     cancellationToken);
 
                 return cachedResult;
             }
@@ -95,48 +87,48 @@ public sealed class IntentProcessingService : IIntentProcessingService
             };
 
             stopwatch.Stop();
-            await _intentObservabilityRepository.SaveAuditAsync(
-                correlationId,
-                userPrompt,
-                hash,
-                rawJson,
-                result.HumanPhrase,
-                false,
-                "Success",
-                null,
-                cancellationToken);
+            // await _intentObservabilityRepository.SaveAuditAsync(
+            //     correlationId,
+            //     userPrompt,
+            //     hash,
+            //     rawJson,
+            //     result.HumanPhrase,
+            //     false,
+            //     "Success",
+            //     null,
+            //     cancellationToken);
 
-            await _intentObservabilityRepository.SaveMetricAsync(
-                correlationId,
-                (int)stopwatch.ElapsedMilliseconds,
-                false,
-                true,
-                null,
-                cancellationToken);
+            // await _intentObservabilityRepository.SaveMetricAsync(
+            //     correlationId,
+            //     (int)stopwatch.ElapsedMilliseconds,
+            //     false,
+            //     true,
+            //     null,
+            //     cancellationToken);
 
             return result;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            await _intentObservabilityRepository.SaveAuditAsync(
-                correlationId,
-                userPrompt,
-                hash,
-                string.Empty,
-                string.Empty,
-                false,
-                "Error",
-                ex.Message,
-                cancellationToken);
+            // await _intentObservabilityRepository.SaveAuditAsync(
+            //     correlationId,
+            //     userPrompt,
+            //     hash,
+            //     string.Empty,
+            //     string.Empty,
+            //     false,
+            //     "Error",
+            //     ex.Message,
+            //     cancellationToken);
 
-            await _intentObservabilityRepository.SaveMetricAsync(
-                correlationId,
-                (int)stopwatch.ElapsedMilliseconds,
-                false,
-                false,
-                ex.GetType().Name,
-                cancellationToken);
+            // await _intentObservabilityRepository.SaveMetricAsync(
+            //     correlationId,
+            //     (int)stopwatch.ElapsedMilliseconds,
+            //     false,
+            //     false,
+            //     ex.GetType().Name,
+            //     cancellationToken);
 
             throw;
         }

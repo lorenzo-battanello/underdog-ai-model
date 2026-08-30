@@ -7,17 +7,21 @@ internal static class JsonIntentParser
 {
     public static ParsedIntent Parse(string rawJson)
     {
-        using var document = JsonDocument.Parse(rawJson);
+        using var document = JsonSerializer.Deserialize<JsonDocument>(rawJson);
         var root = document.RootElement;
 
         var action = TryRead(root, "action") ?? TryRead(root, "azione") ?? "Unknown";
         var subject = TryRead(root, "subject") ?? TryRead(root, "entity") ?? TryRead(root, "risorsa") ?? "Unknown";
+        var id = TryRead(root, "id") ?? TryRead(root, "oggetto") ?? "Unknown";
+        var payload = TryRead(root, "payload") ?? TryRead(root, "dati") ?? string.Empty;
         var humanPhrase = TryRead(root, "humanPhrase") ?? TryRead(root, "human_phrase") ?? BuildHumanPhrase(action, subject);
 
         return new ParsedIntent
         {
             Action = action,
             Subject = subject,
+            Id = id,
+            Payload = payload,
             HumanPhrase = humanPhrase
         };
     }

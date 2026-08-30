@@ -1,21 +1,16 @@
 using System.Data;
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Underdog.Application.Abstractions;
 using Underdog.Application.Configuration;
+using Underdog.Application.Data;
 
 namespace Underdog.Application.Repositories;
-
-public sealed class IntentObservabilityRepository : IIntentObservabilityRepository
-{
-    private readonly CacheOptions _options;
-
-    public IntentObservabilityRepository(IOptions<CacheOptions> options)
-    {
-        _options = options.Value;
-    }
-
+public sealed class IntentObservabilityRepository(IDBMConnection connection) : IIntentObservabilityRepository
+{    
+    private readonly IDBMConnection _connection = connection;
     public async Task SaveAuditAsync(string correlationId, string originalPrompt, string normalizedPromptHash, string rawJsonResponse, string humanPhrase, bool fromCache, string status, string? errorMessage, CancellationToken cancellationToken = default)
     {
         const string sql = """
@@ -45,7 +40,7 @@ public sealed class IntentObservabilityRepository : IIntentObservabilityReposito
             );
             """;
 
-        using var connection = OpenConnection();
+        using var connection = _connection.OpenConnection();
         await connection.ExecuteAsync(new CommandDefinition(sql, new
         {
             CorrelationId = correlationId,
@@ -82,7 +77,7 @@ public sealed class IntentObservabilityRepository : IIntentObservabilityReposito
             );
             """;
 
-        using var connection = OpenConnection();
+        using var connection = _connection.OpenConnection();
         await connection.ExecuteAsync(new CommandDefinition(sql, new
         {
             CorrelationId = correlationId,
@@ -124,19 +119,12 @@ public sealed class IntentObservabilityRepository : IIntentObservabilityReposito
             END;
             """;
 
-        using var connection = OpenConnection();
+        using var connection = _connection.OpenConnection();
         await connection.ExecuteAsync(new CommandDefinition(sql, new
         {
             ModelVersion = modelVersion,
             ModelPath = modelPath,
             ModelFileHash = modelFileHash
         }, cancellationToken: cancellationToken));
-    }
-
-    private IDbConnection OpenConnection()
-    {
-        var connection = new SqlConnection(_options.ConnectionString);
-        connection.Open();
-        return connection;
     }
 }

@@ -1,6 +1,6 @@
 namespace Underdog.Application.Abstractions;
 
-public interface IGgufModelService
+public interface IModelService
 {
     Task<string> InferRawJsonAsync(string userSentence, CancellationToken cancellationToken = default);
 }
