@@ -3,3 +3,5 @@ AIModels/
 .DS_Store
 **/bin/
 **/obj/
+.env
+**/.env
