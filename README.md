@@ -73,3 +73,14 @@ Sezioni `appsettings` usate:
 	- `MaxTokens`
 - `IntentCache`
 	- `ConnectionString` (SQL Server)
+- `GeminiModel`
+	- `ApiKey`
+
+### File `.env` (segreti)
+
+Le credenziali (API key e connection string) non sono in `appsettings.json`: vanno in un file `.env`, ignorato da git.
+
+1. Copia `.env.example` in `Underdog.API/.env`.
+2. Valorizza `GeminiModel__ApiKey` e `IntentCache__ConnectionString`.
+
+Il file viene caricato all'avvio (`DotNetEnv`) e sovrascrive `appsettings.json`; `__` separa sezione e chiave. In produzione si possono usare direttamente variabili d'ambiente con gli stessi nomi.
